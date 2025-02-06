@@ -1,0 +1,43 @@
+networks:
+  docker-net:
+    driver: bridge
+
+services:
+
+  grafana:
+    image: grafana/grafana
+    networks:
+      - docker-net
+    ports:
+      - 3000:3000
+    restart: unless-stopped
+
+  alloy:
+    image: grafana/alloy
+    networks:
+      - docker-net
+    ports:
+      - 4317:4317    # gRPC
+      - 4318:4318    # HTTP
+      - 12345:12345
+    volumes:
+      - ./settings/config.alloy:/etc/alloy/config.alloy
+    restart: unless-stopped
+
+  tempo:
+    image: grafana/tempo
+    networks:
+      - docker-net
+    expose:
+      - 4317    # gRPC input
+      - 4318    # HTTP input
+    ports:
+      - 3200:3200 # HTTP output
+      - 9095:9095 # gRPC output
+    volumes:
+      - ./settings/tempo.yaml:/etc/tempo.yaml
+      - ./data/tempo:/var/tempo/traces
+    command:
+      - "-config.file=/etc/tempo.yaml"
+    restart: unless-stopped
+    
